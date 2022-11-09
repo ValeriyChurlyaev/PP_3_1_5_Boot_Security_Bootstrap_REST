@@ -7,7 +7,6 @@ import javax.persistence.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -18,17 +17,17 @@ public class User implements UserDetails {
     @Column(name = "id")
     private long id;
 
-    @Column(name = "username")
-    private String username;
+    @Column(name = "first_name")
+    private String firstName;
 
-    @Column(name = "second_name")
-    private String secondName;
+    @Column(name = "last_name")
+    private String lastName;
 
     @Column(name = "age")
     private int age;
 
-    @Column(name = "car")
-    private String car;
+    @Column(name = "Email")
+    private String email;
 
 
     @Column(name = "password")
@@ -45,11 +44,11 @@ public class User implements UserDetails {
     public User() {
     }
 
-    public User(String username, String secondName, int age, String car, String password, List<Role> roles) {
-        this.username = username;
-        this.secondName = secondName;
+    public User(String firstName, String lastName, int age, String email, String password, List<Role> roles) {
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.age = age;
-        this.car = car;
+        this.email = email;
         this.password = password;
         this.roles = roles;
     }
@@ -89,20 +88,20 @@ public class User implements UserDetails {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setUsername(String name) {
-        this.username = name;
+    public void setFirstName(String name) {
+        this.firstName = name;
     }
 
-    public String getSecondName() {
-        return secondName;
+    public String getLastName() {
+        return lastName;
     }
 
-    public void setSecondName(String secondName) {
-        this.secondName = secondName;
+    public void setLastName(String secondName) {
+        this.lastName = secondName;
     }
 
     public int getAge() {
@@ -113,17 +112,22 @@ public class User implements UserDetails {
         this.age = age;
     }
 
-    public String getCar() {
-        return car;
+    public String getEmail() {
+        return email;
     }
 
-    public void setCar(String car) {
-        this.car = car;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
 
     public String getPassword() {
         return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
     }
 
     public void setPassword(String password) {
@@ -145,11 +149,11 @@ public class User implements UserDetails {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return id == user.id && age == user.age && Objects.equals(username, user.username) && Objects.equals(secondName, user.secondName) && Objects.equals(car, user.car);
+        return id == user.id && age == user.age && Objects.equals(firstName, user.firstName) && Objects.equals(lastName, user.lastName) && Objects.equals(email, user.email);
     }
 
     @Override
     public int hashCode() {
-        return (13 + (Objects.hash(id, username, secondName, age, car) * 2) << 8);
+        return (13 + (Objects.hash(id, firstName, lastName, age, email) * 2) << 8);
     }
 }
