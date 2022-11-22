@@ -53,5 +53,4 @@ public class UserDAOImp implements UserDAO {
                 .setParameter("username", username)
                 .getResultList();
     }
-
 }

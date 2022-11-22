@@ -2,16 +2,21 @@ package ru.kata.spring.boot_security.demo.controller;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
+import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
-@Controller
-@RequestMapping("/admin")
+import java.util.List;
+
+@CrossOrigin
+@RestController
+@RequestMapping("/admin/api")
 public class AdminController {
 
     private final UserService userService;
@@ -24,39 +29,52 @@ public class AdminController {
         this.roleService = roleService;
     }
 
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> getAllUsers() {
+        final List<User> users = userService.getAllUsers();
+        return users != null && !users.isEmpty()
+                ? new ResponseEntity<>(users, HttpStatus.OK)
+                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
 
-    @GetMapping
-    public String getAllUsers(ModelMap model,
-                              @AuthenticationPrincipal User user) {
-        model.addAttribute("users", userService.getAllUsers());
-        model.addAttribute("user", user);
-        model.addAttribute("role", roleService.getAllRoles());
-        model.addAttribute("newUser", new User());
-        return "users";
+    @GetMapping("/auth")
+    public ResponseEntity<User> showUserById(@AuthenticationPrincipal User user) {
+        return user != null
+                ? new ResponseEntity<>(userService.findUserById(user.getId()), HttpStatus.OK)
+                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
 
-    @PostMapping("/saveUser")
-    public String createUser(@ModelAttribute("user") User user,
-                             @RequestParam(value = "select_role", required = false) String[] roles) {
-        userService.saveUser(user, roles);
-        return "redirect:/admin";
+    @GetMapping("/roles")
+    public ResponseEntity<List<Role>> showAllRoles() {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        List<Role> roles = roleService.getAllRoles();
+        return roles != null && !roles.isEmpty()
+                ? new ResponseEntity<>(roles, responseHeaders, HttpStatus.OK)
+                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping(value = "/update/{id}")
-    public String update(@ModelAttribute("user") User user,
-                         ModelMap model,
-                         @RequestParam(value = "listRoles", required = false) String[] roles) {
-
-        model.addAttribute("user", user);
-        model.addAttribute("role", roleService.getAllRoles());
-        userService.updateUser(user, roles);
-        return "redirect:/admin";
+    @PostMapping("/newUser")
+    public ResponseEntity<?> createUser(@RequestBody User user) {
+        userService.saveUser(user);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PostMapping("/delete/{id}")
-    public String deleteUser(@PathVariable("id") long id) {
-        userService.deleteUser(id);
-        return "redirect:/admin";
+
+    @PatchMapping(value = "/update/{id}")
+    public ResponseEntity<?> update(@RequestBody User user,
+                                    @PathVariable("id") int id) {
+        userService.updateUser(user, id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable("id") long id) {
+        final boolean deleted = userService.deleteUser(id);
+
+        return deleted
+                ? new ResponseEntity<>(HttpStatus.OK)
+                : new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
     }
 }

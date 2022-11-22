@@ -1,5 +1,6 @@
 package ru.kata.spring.boot_security.demo.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -9,8 +10,8 @@ import ru.kata.spring.boot_security.demo.dao.UserDAO;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImp implements UserService {
@@ -19,6 +20,8 @@ public class UserServiceImp implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
 
+
+    @Autowired
     public UserServiceImp(UserDAO userDAO, PasswordEncoder passwordEncoder, RoleService roleService) {
         this.userDAO = userDAO;
         this.passwordEncoder = passwordEncoder;
@@ -37,45 +40,40 @@ public class UserServiceImp implements UserService {
 
     @Override
     @Transactional
-    public void saveUser(User user, String[] roles) {
-        List<Role> role = new ArrayList<>();
-        for (String s : roles) {
-            if (s.equals("ROLE_ADMIN")) {
-                role.add(roleService.getAllRoles().get(0));
-            }
-            if (s.equals("ROLE_USER")) {
-                role.add(roleService.getAllRoles().get(1));
-            }
-        }
-        user.setRoles(role);
+    public void saveUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        List<Role> userRoles = user.getRoles().stream().map(role -> roleService.findRoleById(role.getId()))
+                .collect(Collectors.toList());
+        user.setRoles(userRoles);
         userDAO.saveUser(user);
     }
 
 
     @Override
     @Transactional
-    public void updateUser(User user, String[] roles) {
-        List<Role> role = new ArrayList<>();
-
-        for (String s : roles) {
-            if (s.equals("ROLE_ADMIN")) {
-                role.add(roleService.getAllRoles().get(0));
-            }
-            if (s.equals("ROLE_USER")) {
-                role.add(roleService.getAllRoles().get(1));
-            }
+    public void updateUser(User newUser, int id) {
+        newUser.setId(id);
+        User oldUser = userDAO.findUserById(id);
+        if (newUser.getRoles().isEmpty()) {
+            newUser.setRoles(oldUser.getRoles());
         }
-        user.setRoles(role);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userDAO.updateUser(user);
+        if (newUser.getPassword().isEmpty()) {
+
+            newUser.setPassword(passwordEncoder.encode(oldUser.getPassword()));
+        }
+        userDAO.updateUser(newUser);
     }
 
 
     @Override
     @Transactional
-    public void deleteUser(long id) {
+    public boolean deleteUser(long id) {
         userDAO.deleteUser(id);
+        if (userDAO.findUserById(id) == null) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 
@@ -85,3 +83,4 @@ public class UserServiceImp implements UserService {
         return user.get(0);
     }
 }
+

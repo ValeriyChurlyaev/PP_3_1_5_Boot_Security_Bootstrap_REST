@@ -1,15 +1,16 @@
 package ru.kata.spring.boot_security.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
-@Controller
-@RequestMapping("/user")
+@CrossOrigin
+@RestController
+@RequestMapping("/user/api")
 public class UserController {
 
     private final UserService userService;
@@ -19,10 +20,14 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/{id}")
-    public String showUserPage(Model model,
-                               @AuthenticationPrincipal User user) {
-        model.addAttribute("currentUser", user);
-        return "user";
+    @GetMapping()
+    public ResponseEntity<User> showUserPage(Authentication auth) {
+        final User currentUser = (User) userService.loadUserByUsername(auth.getName());
+
+        try {
+            return new ResponseEntity<>(currentUser, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
